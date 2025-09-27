@@ -1,0 +1,28 @@
+.dashboard-wrapper {
+    min-height: 100vh;
+
+    .sidebar {
+        background-color: #1d3557;
+
+        .ant-menu-dark {
+            background-color: #1d3557;
+        }
+
+        .logo {
+            background-color: #1d3557;
+        }
+    }
+
+    .main-layout {
+        .header {
+            height: 60px;
+        }
+
+        .dashboard-content {
+            background: #fff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+    }
+}

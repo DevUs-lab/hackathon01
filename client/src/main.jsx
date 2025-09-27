@@ -1,10 +1,19 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App";
-import "antd/dist/reset.css";
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './config/global.js'
+import App from './App.jsx'
+import { BrowserRouter } from 'react-router-dom'
+import { ThemeProvider } from './contexts/ThemeContext.jsx'
+import { AuthProvider } from './contexts/Auth.jsx'
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  </StrictMode>,
+)
