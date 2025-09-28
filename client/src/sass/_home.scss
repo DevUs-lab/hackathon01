@@ -1,0 +1,24 @@
+.icon-circle {
+    width: 120px;
+    height: 120px;
+    background: white;
+    color: #FA7F4B;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.6s ease;
+    cursor: pointer;
+    perspective: 1000px;
+}
+
+.icon-circle.flip-hover:hover {
+    transform: rotateY(180deg);
+    background: #FA7F4B;
+    color: white;
+}
+
+.icon {
+    font-size: 70px;
+    transition: transform 0.6s ease;
+}

@@ -2,83 +2,96 @@ import { Button, Col, Row, Typography } from 'antd'
 import React, { useEffect, useState } from 'react'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useAuthContext } from '../../../contexts/Auth';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { firestore } from '../../../config/firebase';
+import Hero from './Hero';
+import AboutServices from '../About/AboutServices';
+import AboutUs from '../About/AboutUs';
 
-const { Title } = Typography
+
+
+
+const { Title } = Typography;
 
 const Home = () => {
   const { user: authUser } = useAuthContext();
   const [userData, setUserData] = useState(authUser);
-  const [isloading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Real-time listener for user data updates
+  // Update local state when authUser changes
   useEffect(() => {
-    if (!authUser?.uid) return;
-
-    const unsubscribe = onSnapshot(
-      doc(firestore, "users", authUser.uid),
-      (doc) => {
-        if (doc.exists()) {
-          const updatedData = { ...authUser, ...doc.data() };
-          setUserData(updatedData);
-          // Optional: Update the auth context as well
-          // updateUser(updatedData);
-        }
-      }
-    );
-
-    return () => unsubscribe();
+    if (authUser) {
+      setUserData(authUser);
+    }
   }, [authUser]);
 
+  // Example of updating status
   const handleUpdateProfile = async (status) => {
     setIsLoading(true);
     try {
-      await setDoc(
-        doc(firestore, "users", authUser.uid),
-        { status },
-        { merge: true }
-      );
+      // Call your backend API to update status in MongoDB
+      const response = await fetch(`/api/users/${authUser._id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const updatedUser = await response.json();
+
+      setUserData(updatedUser); // update local state
       window.notify(`Status updated to ${status} successfully!`, 'success');
-    } catch (e) {
+    } catch (error) {
+      console.error(error);
       window.notify("Error updating status!", "error");
-      console.error("Error updating document: ", e);
-    } finally {
+    }
+    finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <div className="container ">
-      <Row gutter={16}>
-        <Col span={24} className='mt-3'>
-          <Title level={1} className='text-center mb-0'>Home page</Title>
-          <Title level={2} className='text-center mb-0'>First Name: {userData?.firstName}</Title>
-          <Title level={2} className='text-center mb-0'>Last Name: {userData?.lastName}</Title>
-          <Title level={2} className='text-center mb-0'>
-            Status: {userData?.status || "Not set"}
-          </Title>
-          <Title level={2} className='text-center mb-0'>Email: {userData?.email}</Title>
-          <Title level={2} className='text-center mb-0'>UID: {userData?.uid}</Title>
-        </Col>
+  if (!userData) return <p>Loading...</p>;
 
-        <Col span={24} className='text-center mt-3'>
-          <Button loading={isloading} onClick={() => handleUpdateProfile("active")} className="m-2" type={userData?.status === 'active' ? 'primary' : 'default'}
-          >
-            Set Active
-          </Button>
-          <Button
-            loading={isloading}
-            onClick={() => handleUpdateProfile("inactive")}
-            className="m-2"
-            type={userData?.status === 'inactive' ? 'primary' : 'default'}
-          >
-            Set Inactive
-          </Button>
-        </Col>
-      </Row>
-    </div>
+  return (
+    <>
+      <Hero />
+      <AboutServices />
+      <br />
+      <br />
+      <br />
+      <AboutUs className="mt-3" />
+
+      <div className="container">
+        <Row gutter={16}>
+          <Col span={24} className='mt-3'>
+            <Title level={1} className='text-center mb-0'>Home page</Title>
+            <Title level={2} className='text-center mb-0'>First Name: {userData.firstName}</Title>
+            <Title level={2} className='text-center mb-0'>Last Name: {userData.lastName}</Title>
+            <Title level={2} className='text-center mb-0'>
+              Status: {userData.status || "Not set"}
+            </Title>
+            <Title level={2} className='text-center mb-0'>Email: {userData.email}</Title>
+            <Title level={2} className='text-center mb-0'>ID: {userData._id}</Title>
+          </Col>
+
+          <Col span={24} className='text-center mt-3'>
+            <Button
+              loading={isLoading}
+              onClick={() => handleUpdateProfile("active")}
+              className="m-2"
+              type={userData.status === 'active' ? 'primary' : 'default'}
+            >
+              Set Active
+            </Button>
+            <Button
+              loading={isLoading}
+              onClick={() => handleUpdateProfile("inactive")}
+              className="m-2"
+              type={userData.status === 'inactive' ? 'primary' : 'default'}
+            >
+              Set Inactive
+            </Button>
+          </Col>
+        </Row>
+      </div>
+    </>
   )
 }
 
-export default Home
+export default Home;

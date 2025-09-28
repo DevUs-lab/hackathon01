@@ -161,7 +161,7 @@ const Login = () => {
             const { token, user } = res.data;
             login(user, token); // set context and localStorage
             window.notify("Login successful!", "success");
-            navigate("/dashboard");
+            navigate("/");
         } catch (error) {
             window.notify(error.response?.data?.msg || "Login failed", "error");
         } finally {
