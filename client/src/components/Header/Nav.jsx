@@ -84,12 +84,13 @@ const Nav = () => {
     const navigate = useNavigate();
 
     return (
-        <nav className="navbar navbar-expand-lg bg-body-tertiary">
+        <nav className="navbar navbar-expand-lg" style={{ background: "#FFFFFF", height: 97 }}>
             <div className="container">
-                <Link to={'/'} className="navbar-brand">Folder - Structure</Link>
+                <Link to={'/'} className="navbar-brand">
+                    <img src="https://demo.ovathemewp.com/charihope/wp-content/uploads/2019/05/Logo.svg" alt="logo" height={50} /></Link>
                 <div className="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li className="nav-item"><Link to={'/'} className="nav-link">Home</Link></li>
+                        <li className="nav-item"><Link to={'/'} className="nav-link"><img className="border" src="https://demo.ovathemewp.com/charihope/wp-content/uploads/2019/05/Logo.svg" alt="logo" /></Link></li>
                         <li className="nav-item"><Link to={'/about'} className="nav-link">About</Link></li>
                         <li className="nav-item"><Link to={'/contact'} className="nav-link">Contact</Link></li>
                     </ul>

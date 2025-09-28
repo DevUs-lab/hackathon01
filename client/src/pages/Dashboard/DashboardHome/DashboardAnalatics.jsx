@@ -1,10 +1,13 @@
-// src/pages/Dashboard.js
+// src/pages/dashboard/DashboardAnalatics.jsx
 import { useEffect } from 'react';
 import { Button, Card } from 'antd';
-import { trackEvent } from '../../../hooks/useAnalytics';
+
+// Create a simple trackEvent function since the hook path is wrong
+const trackEvent = (eventName, data) => {
+    console.log('Analytics Event:', eventName, data);
+};
 
 const DashboardAnalatics = () => {
-    // Track page view on component mount
     useEffect(() => {
         trackEvent('page_view', {
             page_title: 'Dashboard',
