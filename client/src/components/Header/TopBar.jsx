@@ -13,7 +13,7 @@ const TopBar = () => {
                 <div className="row text-white d-flex align-items-center justify-content-between">
                     <div className="col align-baseline">
                         <span>
-                            <AiOutlineMail className="fw-bold me-1" /> {user ? user.email : "Salam"}
+                            <AiOutlineMail className="fw-bold me-1" /> {user ? user.email : "Salam Stranger"}
                         </span>
                         <span className="ms-3 mb-0">
                             <MdPhoneAndroid className="fw-bold me-1" />{user ? "03190609041" : "03x-xxxxxxxx"}

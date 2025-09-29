@@ -25,7 +25,23 @@ mongoose
     .then(() => console.log("MongoDB connected successfully ✅"))
     .catch((err) => console.error("MongoDB connection error ❌", err));
 
-// --- Schemas & Models ---
+/* ------------------ MODELS ------------------ */
+
+// User Model
+// const UserSchema = new mongoose.Schema(
+//     {
+//         firstName: { type: String, required: true },
+//         lastName: { type: String },
+//         email: { type: String, required: true, unique: true },
+//         password: { type: String, required: true },
+//         photoURL: { type: String },
+//         phone: { type: String },
+//         bio: { type: String },
+//         status: { type: String, default: "active" },
+//     },
+//     { timestamps: true }
+// );
+// const User = mongoose.model("User", UserSchema);
 
 const UserSchema = new mongoose.Schema(
     {
@@ -37,11 +53,13 @@ const UserSchema = new mongoose.Schema(
         phone: { type: String },
         bio: { type: String },
         status: { type: String, default: "active" },
+        role: { type: String, enum: ["user", "admin"], default: "user" } // NEW
     },
     { timestamps: true }
 );
-const User = mongoose.model("User", UserSchema);
 
+
+// Todo Model
 const TodoSchema = new mongoose.Schema(
     {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -52,7 +70,25 @@ const TodoSchema = new mongoose.Schema(
 );
 const Todo = mongoose.model("Todo", TodoSchema);
 
-// --- auth middleware ---
+// Campaign Model
+const CampaignSchema = new mongoose.Schema(
+    {
+        title: { type: String, required: true },
+        description: { type: String, required: true },
+        targetGoal: { type: Number, required: true },
+        raisedAmount: { type: Number, default: 0 },
+        category: {
+            type: String,
+            enum: ["Health", "Education", "Relief", "Other"],
+            default: "Other",
+        },
+        createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    },
+    { timestamps: true }
+);
+const Campaign = mongoose.model("Campaign", CampaignSchema);
+
+/* ------------------ AUTH MIDDLEWARE ------------------ */
 function authMiddleware(req, res, next) {
     const header = req.headers["authorization"];
     const token = header && header.split(" ")[1];
@@ -67,15 +103,14 @@ function authMiddleware(req, res, next) {
     }
 }
 
-// ----------------- AUTH ROUTES -----------------
-
+/* ------------------ AUTH ROUTES ------------------ */
 // register
 app.post("/api/auth/register", async (req, res) => {
     try {
         let { firstName, lastName, email, password } = req.body;
-        if (!firstName || !email || !password) return res.status(400).json({ msg: "Missing required fields" });
+        if (!firstName || !email || !password)
+            return res.status(400).json({ msg: "Missing required fields" });
 
-        firstName = firstName.trim();
         email = email.trim().toLowerCase();
 
         const existingUser = await User.findOne({ email });
@@ -84,12 +119,7 @@ app.post("/api/auth/register", async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const user = new User({
-            firstName,
-            lastName,
-            email,
-            password: hashedPassword,
-        });
+        const user = new User({ firstName, lastName, email, password: hashedPassword });
         await user.save();
 
         return res.json({ msg: "User registered successfully" });
@@ -116,7 +146,12 @@ app.post("/api/auth/login", async (req, res) => {
 
         return res.json({
             token,
-            user: { id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email },
+            user: {
+                id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+            },
         });
     } catch (err) {
         console.error(err);
@@ -136,9 +171,8 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
     }
 });
 
-// ----------------- USER ROUTES -----------------
-
-// get user by id (protected)
+/* ------------------ USER ROUTES ------------------ */
+// get user by id
 app.get("/api/users/:id", authMiddleware, async (req, res) => {
     try {
         const user = await User.findById(req.params.id).select("-password");
@@ -150,16 +184,17 @@ app.get("/api/users/:id", authMiddleware, async (req, res) => {
     }
 });
 
-// update profile (protected) - allowed only for owner
+// update profile
 app.put("/api/users/:id", authMiddleware, async (req, res) => {
     try {
         if (req.user !== req.params.id) return res.status(403).json({ msg: "Forbidden" });
 
         const updates = { ...req.body };
-        // Prevent password update here; use change-password route
         delete updates.password;
 
-        const updated = await User.findByIdAndUpdate(req.params.id, updates, { new: true }).select("-password");
+        const updated = await User.findByIdAndUpdate(req.params.id, updates, { new: true }).select(
+            "-password"
+        );
         return res.json(updated);
     } catch (err) {
         console.error(err);
@@ -167,7 +202,7 @@ app.put("/api/users/:id", authMiddleware, async (req, res) => {
     }
 });
 
-// change password (protected)
+// change password
 app.put("/api/users/change-password", authMiddleware, async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
@@ -190,9 +225,7 @@ app.put("/api/users/change-password", authMiddleware, async (req, res) => {
     }
 });
 
-// ----------------- TODOS ROUTES (protected) -----------------
-
-// list todos for logged-in user
+/* ------------------ TODO ROUTES ------------------ */
 app.get("/api/todos", authMiddleware, async (req, res) => {
     try {
         const todos = await Todo.find({ userId: req.user }).sort({ createdAt: -1 });
@@ -203,7 +236,6 @@ app.get("/api/todos", authMiddleware, async (req, res) => {
     }
 });
 
-// create todo
 app.post("/api/todos", authMiddleware, async (req, res) => {
     try {
         const { text } = req.body;
@@ -218,7 +250,6 @@ app.post("/api/todos", authMiddleware, async (req, res) => {
     }
 });
 
-// update todo
 app.put("/api/todos/:id", authMiddleware, async (req, res) => {
     try {
         const todo = await Todo.findById(req.params.id);
@@ -234,7 +265,6 @@ app.put("/api/todos/:id", authMiddleware, async (req, res) => {
     }
 });
 
-// delete todo
 app.delete("/api/todos/:id", authMiddleware, async (req, res) => {
     try {
         const todo = await Todo.findById(req.params.id);
@@ -249,7 +279,74 @@ app.delete("/api/todos/:id", authMiddleware, async (req, res) => {
     }
 });
 
-// start server
+/* ------------------ CAMPAIGN ROUTES ------------------ */
+// list all campaigns
+app.get("/api/campaigns", async (req, res) => {
+    try {
+        const campaigns = await Campaign.find().populate("createdBy", "firstName email");
+        return res.json(campaigns);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ msg: "Server error", error: err.message });
+    }
+});
+
+// create campaign
+app.post("/api/campaigns", authMiddleware, async (req, res) => {
+    try {
+        const { title, description, targetGoal, category } = req.body;
+        if (!title || !description || !targetGoal)
+            return res.status(400).json({ msg: "Missing fields" });
+
+        const campaign = new Campaign({
+            title,
+            description,
+            targetGoal,
+            category,
+            createdBy: req.user,
+        });
+        await campaign.save();
+        return res.status(201).json(campaign);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ msg: "Server error", error: err.message });
+    }
+});
+
+// update campaign
+app.put("/api/campaigns/:id", authMiddleware, async (req, res) => {
+    try {
+        const campaign = await Campaign.findById(req.params.id);
+        if (!campaign) return res.status(404).json({ msg: "Campaign not found" });
+        if (campaign.createdBy.toString() !== req.user)
+            return res.status(403).json({ msg: "Forbidden" });
+
+        const updates = req.body;
+        const updated = await Campaign.findByIdAndUpdate(req.params.id, updates, { new: true });
+        return res.json(updated);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ msg: "Server error", error: err.message });
+    }
+});
+
+// delete campaign
+app.delete("/api/campaigns/:id", authMiddleware, async (req, res) => {
+    try {
+        const campaign = await Campaign.findById(req.params.id);
+        if (!campaign) return res.status(404).json({ msg: "Campaign not found" });
+        if (campaign.createdBy.toString() !== req.user)
+            return res.status(403).json({ msg: "Forbidden" });
+
+        await Campaign.findByIdAndDelete(req.params.id);
+        return res.json({ msg: "Campaign deleted" });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ msg: "Server error", error: err.message });
+    }
+});
+
+/* ------------------ SERVER ------------------ */
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
