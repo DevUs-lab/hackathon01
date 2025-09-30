@@ -11,9 +11,9 @@ const Hero = () => {
             <div className="carousel-inner" style={{ maxHeight: "80vh" }}>
                 <div className="carousel-item active position-relative">
                     <img src="https://t4.ftcdn.net/jpg/06/29/60/23/360_F_629602307_7knXNZJW2OML3OwlXSvwOAPNrb7WsD0c.jpg"
-                        className="d-block w-100" alt="image" />
+                        className="d-block w-100 img-fluid" alt="image" />
 
-                    <div className="position-absolute mt-5" style={{ top: "50%", left: "12%", transform: "translateY(-50%)" }}>
+                    <div className="position-absolute mt-5" style={{ top: "30%", left: "12%", transform: "translateY(-50%)" }}>
                         <h2 className="fw-bold">Help the People in Need</h2>
                         <p>Together we can make a difference</p>
                         <button className='btn rounded-0 border-0 py-2 px-4' style={{ background: "#FA7F4B" }}>Help Now</button>
@@ -24,13 +24,13 @@ const Hero = () => {
                 <div className="carousel-item position-relative">
                     <img
                         src="https://npr.brightspotcdn.com/dims3/default/strip/false/crop/7411x4941+0+0/resize/1100/quality/50/format/jpeg/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2F3f%2F9d%2Fe43a7763440b887ce92d5250fd6a%2Fap25201478859206.jpg"
-                        className="d-block w-100"
+                        className="d-block w-100 img-fluid"
                         alt="..."
                     />
                     <div
                         className="position-absolute "
                         style={{
-                            top: "50%",
+                            top: "30%",
                             left: "12%",
                             transform: "translateY(-50%)"
                         }}
@@ -45,13 +45,13 @@ const Hero = () => {
                 <div className="carousel-item position-relative">
                     <img
                         src="https://opencanada.org/wp-content/uploads/2024/01/Palestine-3.jpg"
-                        className="d-block w-100"
+                        className="d-block w-100 img-fluid"
                         alt="..."
                     />
                     <div
                         className="position-absolute"
                         style={{
-                            top: "50%",
+                            top: "30%",
                             left: "12%",
                             transform: "translateY(-50%)"
                         }}

@@ -9,8 +9,8 @@ const AboutServices = () => {
     return (
         <>
             <div className="container-fluid">
-                <div className="row" style={{ minHeight: "50vh", background: "#F2F2F2" }}>
-                    <div className="col-3 d-flex flex-column justify-content-center align-items-center">
+                <div className="row  py-5" style={{ minHeight: "50vh", background: "#F2F2F2" }}>
+                    <div className="col-12 col-md-6 my-3 my-md-0 col-lg-3 d-flex flex-column justify-content-center align-items-center">
                         <div className="icon-circle flip-hover">
                             <LuHeartHandshake className="icon" />
                         </div>
@@ -21,7 +21,7 @@ const AboutServices = () => {
                         </p>
                     </div>
 
-                    <div className="col-3 flex-column d-flex justify-content-center align-items-center">
+                    <div className="col-12 col-md-6 col-lg-3 my-3 my-md-0 flex-column d-flex justify-content-center align-items-center">
                         <div className="icon-circle flip-hover">
                             {/* <FaDonate className="icon" /> */}
                             <LiaDonateSolid className='icon' />
@@ -35,7 +35,7 @@ const AboutServices = () => {
                             Nunc pulvinar sapien et ligula.
                         </p>
                     </div>
-                    <div className="col-3 flex-column d-flex justify-content-center align-items-center">
+                    <div className="col-12 col-md-6 col-lg-3 my-3 my-md-0 flex-column d-flex justify-content-center align-items-center">
                         <div className="icon-circle flip-hover">
                             <PiHeadCircuit className="icon" />
                         </div>
@@ -46,7 +46,7 @@ const AboutServices = () => {
                             Nunc pulvinar sapien et ligula.
                         </p>
                     </div>
-                    <div className="col-3 flex-column d-flex justify-content-center align-items-center">
+                    <div className="col-12 col-md-6 col-lg-3 my-3 my-md-0 flex-column d-flex justify-content-center align-items-center">
                         <div className="icon-circle flip-hover">
                             <BsPostageHeart className='icon' />
                         </div>

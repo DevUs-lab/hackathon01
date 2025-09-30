@@ -1,24 +1,29 @@
-// src/pages/Campaigns.jsx
 import React, { useEffect, useState } from "react";
-import { useAuthContext } from "../contexts/Auth";
-import { Table, Button, Modal, Input, Select, Form, message } from "antd";
+import { Table, Button, Modal, Form, Input, InputNumber, message } from "antd";
+import axios from "axios";
+import { getToken, getUser } from "../utils/auth";
 
-const { Option } = Select;
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8002";
 
 const Campaigns = () => {
-  const { token, user } = useAuthContext();
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editCampaign, setEditCampaign] = useState(null);
+  const [form] = Form.useForm();
+
+  const token = getToken();
+  const user = getUser();
 
   const fetchCampaigns = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/campaigns");
-      const data = await res.json();
-      setCampaigns(data);
+      setLoading(true);
+      const res = await axios.get(`${API_BASE}/api/campaigns`);
+      setCampaigns(res.data);
     } catch (err) {
-      console.error(err);
+      message.error(err.response?.data?.msg || "Error loading campaigns");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -26,130 +31,90 @@ const Campaigns = () => {
     fetchCampaigns();
   }, []);
 
-  const handleCreateOrUpdate = async (values) => {
+  const handleFinish = async (values) => {
     try {
-      setLoading(true);
-      const url = editCampaign
-        ? `http://localhost:8000/api/campaigns/${editCampaign._id}`
-        : "http://localhost:8000/api/campaigns";
-      const method = editCampaign ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(values),
-      });
-      const data = await res.json();
-
+      const headers = { Authorization: `Bearer ${token}` };
       if (editCampaign) {
-        message.success("Campaign updated successfully!");
+        await axios.put(`${API_BASE}/api/campaigns/${editCampaign._id}`, values, { headers });
+        message.success("Campaign updated");
       } else {
-        message.success("Campaign created successfully!");
+        await axios.post(`${API_BASE}/api/campaigns`, values, { headers });
+        message.success("Campaign created");
       }
-
       setModalOpen(false);
       setEditCampaign(null);
+      form.resetFields();
       fetchCampaigns();
     } catch (err) {
-      console.error(err);
-      message.error("Error creating/updating campaign");
-    } finally {
-      setLoading(false);
+      message.error(err.response?.data?.msg || "Error saving campaign");
     }
   };
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://localhost:8000/api/campaigns/${id}`, {
-        method: "DELETE",
+      await axios.delete(`${API_BASE}/api/campaigns/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      message.success("Campaign deleted!");
+      message.success("Campaign deleted");
       fetchCampaigns();
     } catch (err) {
-      console.error(err);
-      message.error("Error deleting campaign");
+      message.error(err.response?.data?.msg || "Error deleting campaign");
     }
   };
 
-  return (
-    <div className="container mt-4">
-      <h1>NGO Campaigns</h1>
-      {token && (
-        <Button type="primary" onClick={() => setModalOpen(true)} className="mb-3">
-          Add Campaign
-        </Button>
-      )}
+  const columns = [
+    { title: "Title", dataIndex: "title" },
+    { title: "Description", dataIndex: "description" },
+    { title: "Target Goal", dataIndex: "targetGoal" },
+    {
+      title: "Created By",
+      render: (_, record) =>
+        record.createdBy ? `${record.createdBy.firstName} ${record.createdBy.lastName}` : "N/A",
+    },
+    {
+      title: "Actions",
+      render: (_, record) => {
+        if (!user) return null;
+        const canManage = user.role === "admin";
+        return canManage ? (
+          <>
+            <Button type="link" onClick={() => { setEditCampaign(record); form.setFieldsValue(record); setModalOpen(true); }}>Edit</Button>
+            <Button type="link" danger onClick={() => handleDelete(record._id)}>Delete</Button>
+          </>
+        ) : null;
+      },
+    },
+  ];
 
+  return (
+    <div>
+      <h1>Campaigns</h1>
+      {user?.role === "admin" && (
+        <Button type="primary" onClick={() => setModalOpen(true)}>New Campaign</Button>
+      )}
       <Table
-        dataSource={campaigns.map(c => ({ ...c, key: c._id }))}
-        columns={[
-          { title: "Title", dataIndex: "title" },
-          { title: "Description", dataIndex: "description" },
-          { title: "Target Goal", dataIndex: "targetGoal" },
-          { title: "Raised Amount", dataIndex: "raisedAmount" },
-          { title: "Category", dataIndex: "category" },
-          {
-            title: "Actions",
-            render: (_, record) =>
-              token && (user._id === record.createdBy._id || user.role === "admin") && (
-                <>
-                  <Button
-                    type="link"
-                    onClick={() => {
-                      setEditCampaign(record);
-                      setModalOpen(true);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button type="link" danger onClick={() => handleDelete(record._id)}>
-                    Delete
-                  </Button>
-                </>
-              ),
-          },
-        ]}
+        dataSource={campaigns}
+        rowKey="_id"
+        columns={columns}
+        loading={loading}
+        style={{ marginTop: 20 }}
       />
 
       <Modal
-        title={editCampaign ? "Edit Campaign" : "Add Campaign"}
         open={modalOpen}
-        onCancel={() => {
-          setModalOpen(false);
-          setEditCampaign(null);
-        }}
-        footer={null}
+        title={editCampaign ? "Edit Campaign" : "New Campaign"}
+        onCancel={() => { setModalOpen(false); setEditCampaign(null); form.resetFields(); }}
+        onOk={() => form.submit()}
       >
-        <Form
-          layout="vertical"
-          initialValues={editCampaign || { category: "Other" }}
-          onFinish={handleCreateOrUpdate}
-        >
-          <Form.Item label="Title" name="title" rules={[{ required: true }]}>
+        <Form form={form} layout="vertical" onFinish={handleFinish}>
+          <Form.Item name="title" label="Title" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="Description" name="description" rules={[{ required: true }]}>
+          <Form.Item name="description" label="Description" rules={[{ required: true }]}>
             <Input.TextArea />
           </Form.Item>
-          <Form.Item label="Target Goal" name="targetGoal" rules={[{ required: true }]}>
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item label="Category" name="category">
-            <Select>
-              <Option value="Health">Health</Option>
-              <Option value="Education">Education</Option>
-              <Option value="Relief">Relief</Option>
-              <Option value="Other">Other</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading}>
-              {editCampaign ? "Update" : "Create"}
-            </Button>
+          <Form.Item name="targetGoal" label="Target Goal" rules={[{ required: true }]}>
+            <InputNumber style={{ width: "100%" }} />
           </Form.Item>
         </Form>
       </Modal>

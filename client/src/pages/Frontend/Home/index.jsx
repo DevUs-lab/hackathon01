@@ -2,7 +2,7 @@
 import { Button, Col, Row, Typography } from 'antd'
 import React, { useEffect, useState } from 'react'
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useAuthContext } from '../../../contexts/Auth';
+import { AuthProvider, useAuthContext } from '../../../contexts/Auth';
 import Hero from './Hero';
 import AboutServices from '../About/AboutServices';
 import AboutUs from '../About/AboutUs';
