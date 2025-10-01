@@ -8,38 +8,122 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
 // Register
+// router.post("/register", async (req, res) => {
+//     try {
+//         let { firstName, lastName, email, password } = req.body;
+//         if (!firstName || !email || !password)
+//             return res.status(400).json({ msg: "Missing fields" });
+
+//         email = email.trim().toLowerCase();
+//         const existingUser = await User.findOne({ email });
+//         if (existingUser) return res.status(400).json({ msg: "Email already in use" });
+
+//         const hashedPassword = await bcrypt.hash(password, 10);
+//         const user = new User({ firstName, lastName, email, password: hashedPassword });
+//         await user.save();
+
+//         return res.json({ msg: "User registered successfully" });
+//     } catch (err) {
+//         return res.status(500).json({ msg: "Server error", error: err.message });
+//     }
+// });
+
+// Register
 router.post("/register", async (req, res) => {
     try {
         let { firstName, lastName, email, password } = req.body;
-        if (!firstName || !email || !password)
+
+        console.log("Registration attempt:", { firstName, email }); // Debug log
+
+        if (!firstName || !email || !password) {
             return res.status(400).json({ msg: "Missing fields" });
+        }
 
         email = email.trim().toLowerCase();
-        const existingUser = await User.findOne({ email });
-        if (existingUser) return res.status(400).json({ msg: "Email already in use" });
 
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ msg: "Email already in use" });
+        }
+
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ firstName, lastName, email, password: hashedPassword });
+
+        // Create user
+        const user = new User({
+            firstName,
+            lastName,
+            email,
+            password: hashedPassword
+        });
+
         await user.save();
 
-        return res.json({ msg: "User registered successfully" });
+        console.log("User registered successfully:", user._id); // Debug log
+
+        return res.json({
+            msg: "User registered successfully",
+            userId: user._id
+        });
+
     } catch (err) {
-        return res.status(500).json({ msg: "Server error", error: err.message });
+        console.error("Registration error:", err); // Detailed error log
+        return res.status(500).json({
+            msg: "Server error during registration",
+            error: err.message
+        });
     }
 });
+
+// Login
+// router.post("/login", async (req, res) => {
+//     try {
+//         const { email: rawEmail, password } = req.body;
+//         if (!rawEmail || !password) return res.status(400).json({ msg: "Missing credentials" });
+
+//         const email = rawEmail.trim().toLowerCase();
+//         const user = await User.findOne({ email });
+//         if (!user) return res.status(400).json({ msg: "Invalid credentials" });
+
+//         const isMatch = await bcrypt.compare(password, user.password);
+//         if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
+
+//         const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
+
+//         const safeUser = {
+//             id: user._id,
+//             firstName: user.firstName,
+//             lastName: user.lastName,
+//             email: user.email,
+//             role: user.role,
+//         };
+
+//         return res.json({ token, user: safeUser });
+//     } catch (err) {
+//         return res.status(500).json({ msg: "Server error", error: err.message });
+//     }
+// });
 
 // Login
 router.post("/login", async (req, res) => {
     try {
         const { email: rawEmail, password } = req.body;
-        if (!rawEmail || !password) return res.status(400).json({ msg: "Missing credentials" });
+        if (!rawEmail || !password) {
+            return res.status(400).json({ msg: "Missing credentials" });
+        }
 
-        const email = rawEmail.trim().toLowerCase();
+        const email = String(rawEmail).trim().toLowerCase();
         const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ msg: "Invalid credentials" });
+
+        if (!user) {
+            return res.status(400).json({ msg: "Invalid credentials" });
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
+        if (!isMatch) {
+            return res.status(400).json({ msg: "Invalid credentials" });
+        }
 
         const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
 
@@ -53,9 +137,11 @@ router.post("/login", async (req, res) => {
 
         return res.json({ token, user: safeUser });
     } catch (err) {
+        console.error("Login error:", err.message);
         return res.status(500).json({ msg: "Server error", error: err.message });
     }
 });
+
 
 // Current user
 router.get("/me", authMiddleware, async (req, res) => {

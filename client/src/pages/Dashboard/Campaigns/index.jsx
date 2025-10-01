@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useAuthContext } from "../contexts/Auth";
+import { useAuthContext } from "../../../contexts/Auth";
 import { List, Button, Modal, Input, message } from "antd";
 
 const Campaigns = () => {

@@ -170,24 +170,44 @@ const Register = () => {
 
     const handleSubmit = async (values) => {
         const { firstName, lastName, email, password, confirmPassword } = values;
+
+        // Client-side validation
         if (password !== confirmPassword) {
             window.notify("Passwords do not match", "error");
             return;
         }
 
+        if (password.length < 6) {
+            window.notify("Password must be at least 6 characters", "error");
+            return;
+        }
+
         setIsLoading(true);
+
         try {
-            await axios.post(`${API_BASE}/api/auth/register`, {
-                firstName,
-                lastName,
-                email,
-                password,
+            console.log("Sending registration request..."); // Debug log
+
+            const response = await axios.post(`${API_BASE}/api/auth/register`, {
+                firstName: firstName.trim(),
+                lastName: lastName?.trim() || "",
+                email: email.trim().toLowerCase(),
+                password: password
             });
+
+            console.log("Registration response:", response.data); // Debug log
+
             window.notify("Registration successful!", "success");
             form.resetFields();
             navigate("/auth/login");
+
         } catch (error) {
-            window.notify(error.response?.data?.msg || "Registration failed", "error");
+            console.error("Registration error details:", error); // Detailed error log
+
+            const errorMessage = error.response?.data?.msg ||
+                error.response?.data?.error ||
+                "Registration failed. Please try again.";
+
+            window.notify(errorMessage, "error");
         } finally {
             setIsLoading(false);
         }
@@ -196,12 +216,22 @@ const Register = () => {
     return (
         <main className="register-page p-3 p-md-4">
             <Card className="register-card p-3 p-md-4">
-                <Button type="text" icon={<CloseOutlined />} onClick={() => navigate("/")} style={{ position: "absolute", top: 16, right: 16 }} />
+                <Button
+                    type="text"
+                    icon={<CloseOutlined />}
+                    onClick={() => navigate("/")}
+                    style={{ position: "absolute", top: 16, right: 16 }}
+                />
                 <Title level={2} className="text-center">Create Account</Title>
+
                 <Form layout="vertical" form={form} onFinish={handleSubmit}>
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
-                            <Form.Item name="firstName" label="First Name" rules={[{ required: true, message: "Please enter your first name" }]}>
+                            <Form.Item
+                                name="firstName"
+                                label="First Name"
+                                rules={[{ required: true, message: "Please enter your first name" }]}
+                            >
                                 <Input placeholder="Enter your first name" size="large" />
                             </Form.Item>
                         </Col>
@@ -211,22 +241,58 @@ const Register = () => {
                             </Form.Item>
                         </Col>
                         <Col xs={24}>
-                            <Form.Item name="email" label="Email" rules={[{ required: true }, { type: "email", message: "Invalid email" }]}>
+                            <Form.Item
+                                name="email"
+                                label="Email"
+                                rules={[
+                                    { required: true, message: "Please enter your email" },
+                                    { type: "email", message: "Invalid email format" }
+                                ]}
+                            >
                                 <Input placeholder="Enter your email" size="large" />
                             </Form.Item>
                         </Col>
                         <Col xs={24}>
-                            <Form.Item name="password" label="Password" rules={[{ required: true }, { min: 6 }]}>
+                            <Form.Item
+                                name="password"
+                                label="Password"
+                                rules={[
+                                    { required: true, message: "Please enter your password" },
+                                    { min: 6, message: "Password must be at least 6 characters" }
+                                ]}
+                            >
                                 <Input.Password placeholder="Enter your password" size="large" />
                             </Form.Item>
                         </Col>
                         <Col xs={24}>
-                            <Form.Item name="confirmPassword" label="Confirm Password" rules={[{ required: true }, { min: 6 }]}>
+                            <Form.Item
+                                name="confirmPassword"
+                                label="Confirm Password"
+                                rules={[
+                                    { required: true, message: "Please confirm your password" },
+                                    ({ getFieldValue }) => ({
+                                        validator(_, value) {
+                                            if (!value || getFieldValue('password') === value) {
+                                                return Promise.resolve();
+                                            }
+                                            return Promise.reject('Passwords do not match');
+                                        },
+                                    }),
+                                ]}
+                            >
                                 <Input.Password placeholder="Confirm your password" size="large" />
                             </Form.Item>
                         </Col>
                         <Col span={24}>
-                            <Button type="primary" htmlType="submit" block size="large" loading={isLoading}>Register</Button>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                block
+                                size="large"
+                                loading={isLoading}
+                            >
+                                Register
+                            </Button>
                         </Col>
                         <Col span={24} style={{ textAlign: "center", marginTop: 16 }}>
                             <Link to="/auth/login">Already have an account? Login</Link>

@@ -7,6 +7,7 @@ import Todos from './Todos';
 import UserProfile from './Profile';
 import Setting from './settings';
 import DashboardLayout from '../../components/DashboardLayout';
+import Campaigns from './Campaigns';
 // import { useAuthContext } from '../../contexts/Auth';
 // import DashboardLayout from '../../components/DashboardLayout';
 // import DashboardHome from './DashboardHome';
@@ -30,6 +31,7 @@ const Dashboard = () => {
                 <Route path="todos" element={<Todos />} />
                 <Route path="profile" element={<UserProfile />} />
                 <Route path="settings" element={<Setting />} />
+                <Route path="campaign" element={<Campaigns />} />
             </Routes>
         </DashboardLayout>
     );

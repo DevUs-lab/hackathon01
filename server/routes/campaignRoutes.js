@@ -35,9 +35,18 @@ router.post("/", authMiddleware, isAdmin, async (req, res) => {
 });
 
 // Get all campaigns
+// router.get("/", async (req, res) => {
+//   const campaigns = await Campaign.find().populate("createdBy", "firstName email");
+//   res.json(campaigns);
+// });
+
 router.get("/", async (req, res) => {
-  const campaigns = await Campaign.find().populate("createdBy", "firstName email");
-  res.json(campaigns);
+  try {
+    const campaigns = await Campaign.find().populate("createdBy", "firstName email");
+    res.json(campaigns);
+  } catch (err) {
+    res.status(500).json({ msg: "Server error", error: err.message });
+  }
 });
 
 // Update campaign (admin only)

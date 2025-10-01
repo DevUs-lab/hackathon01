@@ -13,7 +13,12 @@ const CreateCampaign = ({ onCreated }) => {
         if (!user) return alert("Login required");
         setLoading(true);
         try {
-            const body = { ...values };
+            const body = {
+                title: values.title,
+                description: values.description,
+                targetGoal: values.goalAmount, // Your backend uses targetGoal, not goalAmount
+                category: values.category
+            };
             const res = await API.post("/campaigns", body);
             alert("Campaign created");
             form.resetFields();

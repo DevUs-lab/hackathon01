@@ -38,6 +38,10 @@ router.put("/change-password", authMiddleware, async (req, res) => {
         const user = await User.findById(req.user);
         if (!user) return res.status(404).json({ msg: "User not found" });
 
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ msg: "Both current and new password are required" });
+        }
+
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) return res.status(400).json({ msg: "Incorrect current password" });
 

@@ -138,17 +138,70 @@
 
 
 
+// import React, { useState } from "react";
+// import { Input, Button, Typography, Row, Col, Card, Form } from "antd";
+// import { CloseOutlined } from "@ant-design/icons";
+// import { Link, useNavigate } from "react-router-dom";
+// import axios from "axios";
+// import { useAuthContext } from "../../../contexts/Auth";
+
+// const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+// const Login = () => {
+//     const { Title } = Typography;
+//     const [isLoading, setIsLoading] = useState(false);
+//     const [form] = Form.useForm();
+//     const navigate = useNavigate();
+//     const { login } = useAuthContext();
+
+//     const handleSubmit = async (values) => {
+//         setIsLoading(true);
+//         try {
+//             const res = await axios.post(`${API_BASE}/api/auth/login`, values);
+//             const { token, user } = res.data;
+//             login(user, token); // set context and localStorage
+//             window.notify("Login successful!", "success");
+//             navigate("/");
+//         } catch (error) {
+//             window.notify(error.response?.data?.msg || "Login failed", "error");
+//         } finally {
+//             setIsLoading(false);
+//             form.resetFields();
+//         }
+//     };
+
+//     return (
+//         <main className="register-page p-3 p-md-4">
+//             <Card className="register-card p-2 p-md-3">
+//                 <Button type="text" icon={<CloseOutlined />} onClick={() => navigate("/")} style={{ position: "absolute", top: 16, right: 16 }} />
+//                 <Title level={2} className="register-title">Login</Title>
+//                 <Form layout="vertical" form={form} onFinish={handleSubmit}>
+//                     <Row gutter={16}>
+//                         <Col xs={24}><Form.Item name="email" label="Email" rules={[{ required: true }, { type: "email" }]}><Input placeholder="Enter your email" size="large" /></Form.Item></Col>
+//                         <Col xs={24}><Form.Item name="password" label="Password" rules={[{ required: true }, { min: 6 }]}><Input.Password placeholder="Enter your password" size="large" /></Form.Item></Col>
+//                         <Col span={24}><Button type="primary" htmlType="submit" block size="large" loading={isLoading}>Login</Button></Col>
+//                         <Col span={24} style={{ textAlign: "center", marginTop: 16 }}><Link to="/auth/register">Don't have an account? Register</Link></Col>
+//                     </Row>
+//                 </Form>
+//             </Card>
+//         </main>
+//     );
+// };
+
+// export default Login;
+
+
+
+
 import React, { useState } from "react";
 import { Input, Button, Typography, Row, Col, Card, Form } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useAuthContext } from "../../../contexts/Auth";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const { Title } = Typography;
 
 const Login = () => {
-    const { Title } = Typography;
     const [isLoading, setIsLoading] = useState(false);
     const [form] = Form.useForm();
     const navigate = useNavigate();
@@ -157,30 +210,73 @@ const Login = () => {
     const handleSubmit = async (values) => {
         setIsLoading(true);
         try {
-            const res = await axios.post(`${API_BASE}/api/auth/login`, values);
-            const { token, user } = res.data;
-            login(user, token); // set context and localStorage
-            window.notify("Login successful!", "success");
-            navigate("/");
+            const result = await login(values.email, values.password);
+
+            if (result.success) {
+                window.notify("Login successful!", "success");
+                form.resetFields();
+                navigate("/"); // Redirect to home
+            } else {
+                window.notify(result.message || "Login failed", "error");
+            }
         } catch (error) {
-            window.notify(error.response?.data?.msg || "Login failed", "error");
+            console.error("Login error:", error);
+            window.notify("Login failed. Please try again.", "error");
         } finally {
             setIsLoading(false);
-            form.resetFields();
         }
     };
 
     return (
         <main className="register-page p-3 p-md-4">
             <Card className="register-card p-2 p-md-3">
-                <Button type="text" icon={<CloseOutlined />} onClick={() => navigate("/")} style={{ position: "absolute", top: 16, right: 16 }} />
+                <Button
+                    type="text"
+                    icon={<CloseOutlined />}
+                    onClick={() => navigate("/")}
+                    style={{ position: "absolute", top: 16, right: 16 }}
+                />
                 <Title level={2} className="register-title">Login</Title>
                 <Form layout="vertical" form={form} onFinish={handleSubmit}>
                     <Row gutter={16}>
-                        <Col xs={24}><Form.Item name="email" label="Email" rules={[{ required: true }, { type: "email" }]}><Input placeholder="Enter your email" size="large" /></Form.Item></Col>
-                        <Col xs={24}><Form.Item name="password" label="Password" rules={[{ required: true }, { min: 6 }]}><Input.Password placeholder="Enter your password" size="large" /></Form.Item></Col>
-                        <Col span={24}><Button type="primary" htmlType="submit" block size="large" loading={isLoading}>Login</Button></Col>
-                        <Col span={24} style={{ textAlign: "center", marginTop: 16 }}><Link to="/auth/register">Don't have an account? Register</Link></Col>
+                        <Col xs={24}>
+                            <Form.Item
+                                name="email"
+                                label="Email"
+                                rules={[
+                                    { required: true, message: "Please enter your email" },
+                                    { type: "email", message: "Please enter a valid email" }
+                                ]}
+                            >
+                                <Input placeholder="Enter your email" size="large" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24}>
+                            <Form.Item
+                                name="password"
+                                label="Password"
+                                rules={[
+                                    { required: true, message: "Please enter your password" },
+                                    { min: 6, message: "Password must be at least 6 characters" }
+                                ]}
+                            >
+                                <Input.Password placeholder="Enter your password" size="large" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={24}>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                block
+                                size="large"
+                                loading={isLoading}
+                            >
+                                Login
+                            </Button>
+                        </Col>
+                        <Col span={24} style={{ textAlign: "center", marginTop: 16 }}>
+                            <Link to="/auth/register">Don't have an account? Register</Link>
+                        </Col>
                     </Row>
                 </Form>
             </Card>

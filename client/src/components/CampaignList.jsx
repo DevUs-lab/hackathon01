@@ -1,12 +1,13 @@
-// src/components/CampaignList.jsx
-import React, { useEffect, useState, useContext } from "react";
-import API from "../api/api";
-import { Card, Button, InputNumber } from "antd";
-import { AuthContext } from "../context/AuthContext";
+import React, { useEffect, useState } from "react";
+import API from "../api/api"; // This should point to your frontend api.js
+import { Card, Button, InputNumber, Typography, Progress } from "antd";
+import { useAuthContext } from "../contexts/Auth";
+
+const { Title } = Typography;
 
 const CampaignList = () => {
     const [campaigns, setCampaigns] = useState([]);
-    const { token } = useContext(AuthContext);
+    const { user } = useAuthContext();
     const [donateAmounts, setDonateAmounts] = useState({});
 
     useEffect(() => {
@@ -15,7 +16,8 @@ const CampaignList = () => {
                 const res = await API.get("/campaigns");
                 setCampaigns(res.data);
             } catch (err) {
-                console.error(err);
+                console.error("Failed to fetch campaigns:", err);
+                window.notify("Failed to load campaigns", "error");
             }
         };
         fetchCampaigns();
@@ -23,35 +25,66 @@ const CampaignList = () => {
 
     const handleDonate = async (campaignId) => {
         const amount = donateAmounts[campaignId];
-        if (!amount || amount <= 0) return alert("Enter a valid amount");
+        if (!amount || amount <= 0) {
+            window.notify("Enter a valid amount", "error");
+            return;
+        }
 
         try {
-            await API.post("/donations", { campaignId, amount });
-            alert("Donation successful");
-            // update local UI: increment raisedAmount locally (simple)
-            setCampaigns((prev) => prev.map(c => c._id === campaignId ? { ...c, raisedAmount: (c.raisedAmount || 0) + Number(amount) } : c));
-            setDonateAmounts((p) => ({ ...p, [campaignId]: "" }));
+            await API.post("/donations", {
+                campaignId,
+                amount,
+                anonymous: false
+            });
+            window.notify("Donation successful!", "success");
+
+            // Refresh campaigns to update raised amount
+            const res = await API.get("/campaigns");
+            setCampaigns(res.data);
+            setDonateAmounts(prev => ({ ...prev, [campaignId]: "" }));
+
         } catch (err) {
             console.error(err);
-            const msg = err.response?.data?.message || "Donation failed";
-            alert(msg);
+            const msg = err.response?.data?.msg || "Donation failed";
+            window.notify(msg, "error");
         }
     };
 
     return (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 16 }}>
-            {campaigns.map((c) => (
-                <Card key={c._id} title={c.title}>
-                    <p>{c.description}</p>
-                    <p>Category: {c.category}</p>
-                    <p>Goal: {c.goalAmount}</p>
-                    <p>Raised: {c.raisedAmount || 0}</p>
-                    <div style={{ display: "flex", gap: 8 }}>
-                        <InputNumber min={1} value={donateAmounts[c._id]} onChange={(v) => setDonateAmounts(s => ({ ...s, [c._id]: v }))} />
-                        <Button onClick={() => handleDonate(c._id)} disabled={!token}>Donate</Button>
-                    </div>
-                </Card>
-            ))}
+        <div style={{ padding: "20px" }}>
+            <Title level={2}>Active Campaigns</Title>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 16 }}>
+                {campaigns.map((c) => (
+                    <Card key={c._id} title={c.title} style={{ boxShadow: "0 4px 8px rgba(0,0,0,0.1)" }}>
+                        <p>{c.description}</p>
+                        <p><strong>Category:</strong> {c.category}</p>
+                        <p><strong>Goal:</strong> ${c.targetGoal}</p>
+                        <p><strong>Raised:</strong> ${c.raisedAmount || 0}</p>
+
+                        <Progress
+                            percent={Math.round(((c.raisedAmount || 0) / c.targetGoal) * 100)}
+                            style={{ margin: "10px 0" }}
+                        />
+
+                        <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                            <InputNumber
+                                min={1}
+                                value={donateAmounts[c._id]}
+                                onChange={(v) => setDonateAmounts(s => ({ ...s, [c._id]: v }))}
+                                placeholder="Amount"
+                                style={{ width: "120px" }}
+                            />
+                            <Button
+                                type="primary"
+                                onClick={() => handleDonate(c._id)}
+                                disabled={!user}
+                            >
+                                {user ? "Donate" : "Login to Donate"}
+                            </Button>
+                        </div>
+                    </Card>
+                ))}
+            </div>
         </div>
     );
 };
